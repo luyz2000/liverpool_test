@@ -77,37 +77,42 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void GetData(String value) {
-        Guardar_Preferencia(value);
-        swiper.setRefreshing(true);
-        itemProductArrayList.clear();
-        adaptadorProduct.notifyDataSetChanged();
-        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, "https://shoppapp.liverpool.com.mx/appclienteservices/services/v3/plp?force-plp=true&search-string="+value+"&page-number=1&number-of-items-per-page=150", null, new Response.Listener<JSONObject>() {
-            @Override
-            public void onResponse(JSONObject response) {
-                try {
-                    JSONArray records = response.getJSONObject("plpResults").getJSONArray("records");
-                    for (int i = 0; i < records.length(); i++) {
-                        JSONObject jsonobject = records.getJSONObject(i);
-                        itemProductArrayList.add(new ItemProduct(jsonobject.getString("productDisplayName"),
-                                jsonobject.getString("seller"),
-                                jsonobject.getString("listPrice"),
-                                jsonobject.getString("smImage")));
+        if (value.isEmpty()){
+            Toast.makeText(getApplicationContext(),"Ingresa el texto a buscar",Toast.LENGTH_LONG).show();
+            swiper.setRefreshing(false);
+        }else {
+            Guardar_Preferencia(value);
+            swiper.setRefreshing(true);
+            itemProductArrayList.clear();
+            adaptadorProduct.notifyDataSetChanged();
+            JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, "https://shoppapp.liverpool.com.mx/appclienteservices/services/v3/plp?force-plp=true&search-string=" + value + "&page-number=1&number-of-items-per-page=150", null, new Response.Listener<JSONObject>() {
+                @Override
+                public void onResponse(JSONObject response) {
+                    try {
+                        JSONArray records = response.getJSONObject("plpResults").getJSONArray("records");
+                        for (int i = 0; i < records.length(); i++) {
+                            JSONObject jsonobject = records.getJSONObject(i);
+                            itemProductArrayList.add(new ItemProduct(jsonobject.getString("productDisplayName"),
+                                    jsonobject.getString("seller"),
+                                    jsonobject.getString("listPrice"),
+                                    jsonobject.getString("smImage")));
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
                     }
-                } catch (JSONException e) {
-                    e.printStackTrace();
+                    swiper.setRefreshing(false);
+                    adaptadorProduct.notifyDataSetChanged();
+                    findViewById(R.id.main_noitems).setVisibility(itemProductArrayList.isEmpty() ? View.VISIBLE : View.GONE);
                 }
-                swiper.setRefreshing(false);
-                adaptadorProduct.notifyDataSetChanged();
-                findViewById(R.id.main_noitems).setVisibility(itemProductArrayList.isEmpty() ? View.VISIBLE : View.GONE);
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                swiper.setRefreshing(false);
-                Toast.makeText(getApplicationContext(),error.toString(),Toast.LENGTH_LONG).show();
-            }
-        });
-        SigletonVolley.getInstance(getBaseContext()).addToRequestQueue(request);
+            }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    swiper.setRefreshing(false);
+                    Toast.makeText(getApplicationContext(), error.toString(), Toast.LENGTH_LONG).show();
+                }
+            });
+            SigletonVolley.getInstance(getBaseContext()).addToRequestQueue(request);
+        }
     }
 
     void Guardar_Preferencia(String new_history) {
